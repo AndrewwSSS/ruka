@@ -1,21 +1,25 @@
 #include <SoftwareSerial.h>
 #include <Arduino.h>
 #include "ServoManager.h"
+#include "ServoMotor.h"
+
+#define BLUETOOTH_RX_PIN 12
+#define BLUETOOTH_TX_PIN 13
 
 const uint8_t SERVO_PINS[]     = {5, 6, 7, 8, 9, 10};
-const int     SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
+const uint8_t SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
 const uint8_t SERVO_COUNT      = 6;
-const int     MAX_STEPS        = 50;
+const uint8_t MAX_STEPS        = 50;
 
-ServoManager arm(SERVO_PINS, SERVO_DEFAULTS, SERVO_COUNT);
+ServoManager arm(SERVO_COUNT);
 
-SoftwareSerial Bluetooth(12, 13); // Arduino(RX, TX) - HC-05 Bluetooth (TX, RX)
+SoftwareSerial Bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN); // Arduino(RX, TX) - HC-05 Bluetooth (TX, RX)
 
-int  savedPositions[MAX_STEPS][SERVO_COUNT];
-int  stepCount      = 0;
+uint8_t  savedPositions[MAX_STEPS][SERVO_COUNT];
+uint8_t  stepCount      = 0;
 bool playbackActive = false;
 bool playbackPaused = false;
-int  playbackStep   = 0;
+uint8_t  playbackStep   = 0;
 bool playbackStepCurrentStepReached = false;
 uint8_t playbackStepReachedCount = 0;
 
@@ -31,6 +35,11 @@ void setup() {
     Bluetooth.setTimeout(20);
     Serial.println("Bluetooth ready!");
     delay(20);
+
+    for (uint8_t i = 0; i < SERVO_COUNT; i++) {
+        arm.addMotor(new ServoMotor(SERVO_PINS[i], SERVO_DEFAULTS[i]));
+    }
+
     arm.begin();
     arm.onReached(onServoReached);
 }
@@ -57,7 +66,8 @@ void loop() {
             handleCommand(dataIn);
         }
     }
-
+    
+    // Handle playback step completion and run the next step if all servos have reached their target angles.
     if (playbackActive && !playbackPaused && playbackStepCurrentStepReached) {
         playbackStepCurrentStepReached = false;
         playbackStepReachedCount = 0;

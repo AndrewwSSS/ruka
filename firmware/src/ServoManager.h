@@ -1,73 +1,70 @@
 #pragma once
-#include "ServoMotor.h"
+#include "Motor.h"
 
 typedef void (*ServoReachedCallback)(uint8_t id);
 
+// Owns and drives a fixed-size fleet of Motor instances, addressed by index.
+// Motors are registered via addMotor() so the manager works with any mix of
+// Motor subtypes (ServoMotor, a future PCA9685-backed servo, a stepper
+// joint, ...) - it only ever talks to them through the Motor interface.
 class ServoManager {
 public:
-    ServoManager(const uint8_t* pins, const int* defaultAngles, uint8_t n) {
-        count = n;
-        reachedCallback = nullptr;
-
-        servos    = new ServoMotor*[count];
-        prevState = new ServoMotor::State[count];
-
-        for (uint8_t i = 0; i < count; i++) {
-            servos[i]    = new ServoMotor(pins[i], defaultAngles[i]);
-            prevState[i] = ServoMotor::HOLD;
-        }
+    explicit ServoManager(uint8_t capacity)
+        : count(0), capacity(capacity), reachedCallback(nullptr) {
+        motors = new Motor*[capacity];
     }
 
     ~ServoManager() {
         for (uint8_t i = 0; i < count; i++) {
-            delete servos[i];
+            delete motors[i];
         }
-        delete[] servos;
-        delete[] prevState;
+        delete[] motors;
+    }
+
+    // Takes ownership of motor. Returns its id, or 0xFF if capacity is full.
+    uint8_t addMotor(Motor* motor) {
+        if (count >= capacity) return 0xFF;
+        motors[count] = motor;
+        return count++;
     }
 
     void begin() {
-        for (uint8_t i = 0; i < count; i++) servos[i]->begin();
+        for (uint8_t i = 0; i < count; i++) motors[i]->begin();
     }
 
     void update() {
         for (uint8_t i = 0; i < count; i++) {
-            bool wasMoving = prevState[i] != ServoMotor::HOLD;
-            servos[i]->update();
+            motors[i]->update();
 
-            ServoMotor::State now = servos[i]->getState();
-
-            if (wasMoving && now == ServoMotor::HOLD && reachedCallback) {
+            if (motors[i]->reachedTarget() && reachedCallback) {
                 reachedCallback(i);
             }
-
-            prevState[i] = now;
         }
     }
 
     void setDefaultAngles() {
-        for (uint8_t i = 0; i < count; i++) servos[i]->setDefaultAngle();
+        for (uint8_t i = 0; i < count; i++) motors[i]->setDefaultAngle();
     }
 
     void setAngle(uint8_t id, int angle) {
-        if (id < count) servos[id]->setAngle(angle);
+        if (id < count) motors[id]->setAngle(angle);
     }
 
     int getAngle(uint8_t id) const {
-        return (id < count) ? servos[id]->getAngle() : -1;
+        return (id < count) ? motors[id]->getAngle() : -1;
     }
 
-    ServoMotor::State getState(uint8_t id) const {
-        return (id < count) ? servos[id]->getState() : ServoMotor::HOLD;
+    Motor::State getState(uint8_t id) const {
+        return (id < count) ? motors[id]->getState() : Motor::HOLD;
     }
 
     bool isHold(uint8_t id) const {
-        return (id < count) ? (servos[id]->getState() == ServoMotor::HOLD) : true;
+        return (id < count) ? (motors[id]->getState() == Motor::HOLD) : true;
     }
 
     bool allHold() const {
         for (uint8_t i = 0; i < count; i++) {
-            if (servos[i]->getState() != ServoMotor::HOLD) return false;
+            if (motors[i]->getState() != Motor::HOLD) return false;
         }
         return true;
     }
@@ -80,11 +77,11 @@ public:
 
     uint8_t size() const { return count; }
 
-    ServoMotor& operator[](uint8_t id) { return *servos[id]; }
+    Motor& operator[](uint8_t id) { return *motors[id]; }
 
 private:
-    ServoMotor**        servos;
-    ServoMotor::State*  prevState;
-    uint8_t             count;
+    Motor**              motors;
+    uint8_t              count;
+    uint8_t              capacity;
     ServoReachedCallback reachedCallback;
 };
