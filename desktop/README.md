@@ -4,6 +4,9 @@ Cross-platform desktop app (Windows / macOS / Linux) for driving the Ruka
 robotic arm — a 6-servo arm controlled by an Arduino Uno, connected over USB
 serial or a paired HC-05 Bluetooth module. Built with PySide6 + pyserial.
 
+<img width="1145" height="730" alt="image" src="https://github.com/user-attachments/assets/f6660eb1-e9d7-407c-ad2e-2df73e21cdb2" />
+
+
 ## Setup
 
 ```bash
