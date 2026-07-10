@@ -4,11 +4,18 @@
 # on each launch, so startup is a second or two slower than the one-folder
 # build, but there's nothing else to keep alongside it).
 
+import sys
+
+icon_path = 'resources/app_icon.icns' if sys.platform == 'darwin' else 'resources/app_icon.ico'
+
 a = Analysis(
     ['run.py'],
     pathex=[],
     binaries=[],
-    datas=[('resources/arm_image.jpg', 'resources')],
+    datas=[
+        ('resources/arm_image.jpg', 'resources'),
+        ('resources/app_icon.png', 'resources'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -37,4 +44,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=icon_path,
 )
