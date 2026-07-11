@@ -3,8 +3,8 @@
 #include "ServoManager.h"
 #include "PCA9685Servo.h"
 
-#define BLUETOOTH_RX_PIN 12
-#define BLUETOOTH_TX_PIN 13
+#define BLUETOOTH_RX_PIN 13
+#define BLUETOOTH_TX_PIN 12
 #define SERVO_PWM_FREQ_HZ 50 // standard analog servo frequency
 
 const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 3, 4, 5}; // PCA9685 output channels
