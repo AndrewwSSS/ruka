@@ -33,7 +33,7 @@ public:
         }
 
         unsigned long now = millis();
-        if (now - lastMove < ROTATION_DELAY) return;
+        if (now - lastMove < rotationDelay) return;
 
         current_angle += (current_angle < target_angle) ? 1 : -1;
         writeAngle(current_angle);
@@ -86,18 +86,22 @@ public:
     }
 
 protected:
-    explicit Motor(uint8_t defaultAngle)
+    // rotationDelay is the time between 1-degree steps in the default update()
+    // loop (lower = faster sweep speed). Motor types with their own update()
+    // override (e.g. StepMotor) can ignore it.
+    explicit Motor(uint8_t defaultAngle, unsigned long rotationDelay = DEFAULT_ROTATION_DELAY)
         : current_angle(defaultAngle),
           target_angle(defaultAngle),
           defaultAngle(defaultAngle),
           lastMove(0),
+          rotationDelay(rotationDelay),
           state(HOLD),
           justReached(false) {}
 
     static constexpr int DEFAULT_ANGLE = 45;
     static constexpr int MIN_ANGLE = 0;
     static constexpr int MAX_ANGLE = 180;
-    static constexpr unsigned long ROTATION_DELAY = 20; // ms
+    static constexpr unsigned long DEFAULT_ROTATION_DELAY = 20; // ms
 
     // Derived classes report motion state through here instead of writing
     // `state` directly, so the MOVING -> HOLD edge (used by reachedTarget())
@@ -119,6 +123,7 @@ protected:
     uint8_t target_angle;
     uint8_t defaultAngle;
     unsigned long lastMove;
+    unsigned long rotationDelay;
 
 private:
     State state;

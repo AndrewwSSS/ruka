@@ -8,8 +8,8 @@
 // pin per motor).
 class ServoMotor : public Motor {
 public:
-    ServoMotor(uint8_t pin, int defaultAngle = DEFAULT_ANGLE)
-        : Motor(defaultAngle), servoPin(pin) {}
+    ServoMotor(uint8_t pin, int defaultAngle = DEFAULT_ANGLE, unsigned long rotationDelay = DEFAULT_ROTATION_DELAY)
+        : Motor(defaultAngle, rotationDelay), servoPin(pin) {}
 
     ~ServoMotor() override {
         servo.detach();
