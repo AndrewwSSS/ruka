@@ -1,16 +1,18 @@
 #include <SoftwareSerial.h>
 #include <Arduino.h>
 #include "ServoManager.h"
-#include "ServoMotor.h"
+#include "PCA9685Servo.h"
 
 #define BLUETOOTH_RX_PIN 12
 #define BLUETOOTH_TX_PIN 13
+#define SERVO_PWM_FREQ_HZ 50 // standard analog servo frequency
 
-const uint8_t SERVO_PINS[]     = {5, 6, 7, 8, 9, 10};
+const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 3, 4, 5}; // PCA9685 output channels
 const uint8_t SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
 const uint8_t SERVO_COUNT      = 6;
 const uint8_t MAX_STEPS        = 50;
 
+Adafruit_PWMServoDriver pwm; // I2C: SDA -> A4, SCL -> A5 (Uno hardware I2C default)
 ServoManager arm(SERVO_COUNT);
 
 SoftwareSerial Bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN); // Arduino(RX, TX) - HC-05 Bluetooth (TX, RX)
@@ -36,8 +38,11 @@ void setup() {
     Serial.println("Bluetooth ready!");
     delay(20);
 
+    pwm.begin();
+    pwm.setPWMFreq(SERVO_PWM_FREQ_HZ);
+
     for (uint8_t i = 0; i < SERVO_COUNT; i++) {
-        arm.addMotor(new ServoMotor(SERVO_PINS[i], SERVO_DEFAULTS[i]));
+        arm.addMotor(new PCA9685Servo(pwm, SERVO_CHANNELS[i], SERVO_DEFAULTS[i]));
     }
 
     arm.begin();
