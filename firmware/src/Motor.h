@@ -20,10 +20,13 @@ public:
     // Attaches/initializes the underlying hardware and drives it to defaultAngle.
     virtual void begin() = 0;
 
-    // Advances the motor one step towards target_angle. Must be called repeatedly
-    // (e.g. from loop()). Shared by every motor type; only the hardware write
-    // (writeAngle) differs between them.
-    void update() {
+    // Advances the motor towards target_angle. Must be called repeatedly (e.g.
+    // from loop()). Default implementation steps 1 degree at a time through
+    // writeAngle() - fine for a hobby servo, but override this in motor types
+    // that need a different movement strategy (e.g. a stepper that computes a
+    // step count and drives it with its own pulse/acceleration timing instead
+    // of walking degree by degree).
+    virtual void update() {
         if (current_angle == target_angle) {
             setState(HOLD);
             return;
