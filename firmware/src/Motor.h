@@ -45,9 +45,9 @@ public:
         }
     }
 
-    void setAngle(uint8_t angle) {
-        if (angle < MIN_ANGLE) angle = MIN_ANGLE;
-        if (angle > MAX_ANGLE) angle = MAX_ANGLE;
+    void setAngle(uint16_t angle) {
+        if (angle < this->minAngle) angle = this->minAngle;
+        if (angle > this->maxAngle) angle = this->maxAngle;
 
         this->target_angle = angle;
 
@@ -60,7 +60,7 @@ public:
         setAngle(this->defaultAngle);
     }
 
-    uint8_t getAngle() const {
+    uint16_t getAngle() const {
         return this->current_angle;
     }
 
@@ -89,19 +89,27 @@ protected:
     // rotationDelay is the time between 1-degree steps in the default update()
     // loop (lower = faster sweep speed). Motor types with their own update()
     // override (e.g. StepMotor) can ignore it.
-    explicit Motor(uint8_t defaultAngle, unsigned long rotationDelay = DEFAULT_ROTATION_DELAY)
-        : current_angle(defaultAngle),
-          target_angle(defaultAngle),
-          defaultAngle(defaultAngle),
-          lastMove(0),
-          rotationDelay(rotationDelay),
-          state(HOLD),
-          justReached(false) {}
+    explicit Motor(
+        uint8_t defaultAngle,
+        uint16_t rotationDelay = DEFAULT_ROTATION_DELAY,
+        uint16_t minAngle = MIN_ANGLE,
+        uint16_t maxAngle = MAX_ANGLE
+    ) {
+        this->current_angle = defaultAngle;
+        this->target_angle = defaultAngle;
+        this->defaultAngle = defaultAngle;
+        this->lastMove = 0;
+        this->rotationDelay = rotationDelay;
+        this->minAngle = minAngle;
+        this->maxAngle = maxAngle;
+        this->state = HOLD;
+        this->justReached = false;
+    }
 
-    static constexpr int DEFAULT_ANGLE = 45;
-    static constexpr int MIN_ANGLE = 0;
-    static constexpr int MAX_ANGLE = 180;
-    static constexpr unsigned long DEFAULT_ROTATION_DELAY = 20; // ms
+    static constexpr uint16_t DEFAULT_ANGLE = 45;
+    static constexpr uint16_t MIN_ANGLE = 0;
+    static constexpr uint16_t MAX_ANGLE = 180;
+    static constexpr uint16_t DEFAULT_ROTATION_DELAY = 20; // ms
 
     // Derived classes report motion state through here instead of writing
     // `state` directly, so the MOVING -> HOLD edge (used by reachedTarget())
@@ -115,16 +123,17 @@ protected:
 
     // Physically drives the actuator to the given angle. Called from
     // update() on every step and from begin() to reach the initial position.
-    virtual void writeAngle(uint8_t angle) = 0;
+    virtual void writeAngle(uint16_t angle) = 0;
 
     bool DEBUG = false;
 
-    uint8_t current_angle;
-    uint8_t target_angle;
-    uint8_t defaultAngle;
+    uint16_t current_angle;
+    uint16_t target_angle;
+    uint16_t defaultAngle;
     unsigned long lastMove;
-    unsigned long rotationDelay;
-
+    uint16_t rotationDelay;
+    uint16_t minAngle;
+    uint16_t maxAngle;
 private:
     State state;
     bool justReached;

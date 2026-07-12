@@ -9,15 +9,17 @@ typedef void (*ServoReachedCallback)(uint8_t id);
 // joint, ...) - it only ever talks to them through the Motor interface.
 class ServoManager {
 public:
-    explicit ServoManager(uint8_t capacity)
-        : count(0), capacity(capacity), reachedCallback(nullptr) {
+    explicit ServoManager(uint8_t capacity) {
+        this->count = 0;
+        this->capacity = capacity;
+        this->reachedCallback = nullptr;
         motors = new Motor*[capacity];
     }
 
     ~ServoManager() {
-        for (uint8_t i = 0; i < count; i++) {
+        for (uint8_t i = 0; i < count; i++)
             delete motors[i];
-        }
+    
         delete[] motors;
     }
 

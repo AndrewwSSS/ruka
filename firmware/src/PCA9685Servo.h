@@ -18,12 +18,14 @@ public:
     PCA9685Servo(
         Adafruit_PWMServoDriver& driver,
         uint8_t channel,
-        int defaultAngle = DEFAULT_ANGLE,
-        unsigned long rotationDelay = DEFAULT_ROTATION_DELAY
+        uint16_t defaultAngle = DEFAULT_ANGLE,
+        uint16_t rotationDelay = DEFAULT_ROTATION_DELAY
     ) : Motor(defaultAngle, rotationDelay), driver(driver), channel(channel) {}
 
     void begin() override {
-        Serial.println("turning PCA9685 servo to default angle: " + String(target_angle) + " on channel " + String(channel));
+        Serial.println(
+            "turning PCA9685 servo to default angle: " + String(target_angle) + " on channel " + String(channel)
+        );
 
         writeAngle(target_angle);
 
@@ -34,7 +36,7 @@ public:
     }
 
 protected:
-    void writeAngle(uint8_t angle) override {
+    void writeAngle(uint16_t angle) override {
         uint16_t pulse = map(angle, MIN_ANGLE, MAX_ANGLE, MIN_PULSE_US, MAX_PULSE_US);
         driver.writeMicroseconds(channel, pulse);
     }
