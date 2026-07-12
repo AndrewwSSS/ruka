@@ -7,16 +7,19 @@
 #define BLUETOOTH_TX_PIN 12
 #define SERVO_PWM_FREQ_HZ 50        // standard analog servo frequency
 #define SERVO_ROTATION_DELAY_MS 10  // ms between 1-degree steps; lower = faster servo sweep
+#define SERVO_COUNT 6
+#define MAX_STEPS 50
+#define SERIAL_BAUD 9600
+#define BLUETOOTH_BAUD 9600
+#define BLUETOOTH_TIMEOUT_MS 20
 
 const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 3, 4, 5}; // PCA9685 output channels
 const uint8_t SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
-const uint8_t SERVO_COUNT      = 6;
-const uint8_t MAX_STEPS        = 50;
 
 Adafruit_PWMServoDriver pwm; // I2C: SDA -> A4, SCL -> A5 (Uno hardware I2C default)
 ServoManager arm(SERVO_COUNT);
 
-SoftwareSerial Bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN); // Arduino(RX, TX) - HC-05 Bluetooth (TX, RX)
+SoftwareSerial Bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 
 uint8_t  savedPositions[MAX_STEPS][SERVO_COUNT];
 uint8_t  stepCount      = 0;
@@ -33,9 +36,9 @@ void runPlaybackStep();
 void onServoReached(uint8_t id);
 
 void setup() {
-    Serial.begin(9600);
-    Bluetooth.begin(9600);
-    Bluetooth.setTimeout(20);
+    Serial.begin(SERIAL_BAUD);
+    Bluetooth.begin(BLUETOOTH_BAUD);
+    Bluetooth.setTimeout(BLUETOOTH_TIMEOUT_MS);
     Serial.println("Bluetooth ready!");
     delay(20);
 
@@ -43,7 +46,9 @@ void setup() {
     pwm.setPWMFreq(SERVO_PWM_FREQ_HZ);
 
     for (uint8_t i = 0; i < SERVO_COUNT; i++) {
-        arm.addMotor(new PCA9685Servo(pwm, SERVO_CHANNELS[i], SERVO_DEFAULTS[i], SERVO_ROTATION_DELAY_MS));
+        arm.addMotor(
+            new PCA9685Servo(pwm, SERVO_CHANNELS[i], SERVO_DEFAULTS[i], SERVO_ROTATION_DELAY_MS)
+        );
     }
 
     arm.begin();
