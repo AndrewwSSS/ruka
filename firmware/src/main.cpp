@@ -13,9 +13,6 @@
 #define BLUETOOTH_BAUD 9600
 #define BLUETOOTH_TIMEOUT_MS 20
 
-const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 3, 4, 5}; // PCA9685 output channels
-const uint8_t SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
-
 Adafruit_PWMServoDriver pwm; // I2C: SDA -> A4, SCL -> A5 (Uno hardware I2C default)
 ServoManager arm(SERVO_COUNT);
 
@@ -44,6 +41,9 @@ void setup() {
 
     pwm.begin();
     pwm.setPWMFreq(SERVO_PWM_FREQ_HZ);
+
+    const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 3, 4, 5}; // PCA9685 output channels
+    const uint8_t SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
 
     for (uint8_t i = 0; i < SERVO_COUNT; i++) {
         arm.addMotor(
