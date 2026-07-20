@@ -7,6 +7,10 @@ serial or a paired HC-05 Bluetooth module. Built with PySide6 + pyserial.
 <img width="1145" height="730" alt="image" src="https://github.com/user-attachments/assets/f6660eb1-e9d7-407c-ad2e-2df73e21cdb2" />
 
 
+## Requirements
+
+- Python3
+
 ## Setup
 
 ```bash
@@ -36,6 +40,5 @@ python run.py
 ```
 
 Produces a single portable executable: `dist\Ruka.exe` on Windows,
-`dist/Ruka` on macOS/Linux. PyInstaller doesn't cross-compile, so build on
-each OS separately — `./build.sh` works unchanged on all three.
+`dist/Ruka` on macOS/Linux. PyInstaller doesn't cross-compile, so build on each OS separately — `./build.sh` works unchanged on all three.
 
