@@ -6,7 +6,7 @@
 #define BLUETOOTH_RX_PIN 13
 #define BLUETOOTH_TX_PIN 12
 #define SERVO_PWM_FREQ_HZ 50        // standard analog servo frequency
-#define SERVO_ROTATION_DELAY_MS 10  // ms between 1-degree steps; lower = faster servo sweep
+#define SERVO_ROTATION_DELAY_MS 20  // ms between 1-degree steps; lower = faster servo sweep
 #define SERVO_COUNT 6
 #define MAX_STEPS 50
 #define SERIAL_BAUD 9600
@@ -42,8 +42,8 @@ void setup() {
     pwm.begin();
     pwm.setPWMFreq(SERVO_PWM_FREQ_HZ);
 
-    const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 3, 4, 5}; // PCA9685 output channels
-    const uint8_t SERVO_DEFAULTS[] = {90, 90, 90, 90, 90, 90};
+    const uint8_t SERVO_CHANNELS[] = {0, 1, 2, 13, 14, 15}; // PCA9685 output channels
+    const uint8_t SERVO_DEFAULTS[] = {90, 100, 100, 90, 70, 90};
 
     for (uint8_t i = 0; i < SERVO_COUNT; i++) {
         arm.addMotor(
