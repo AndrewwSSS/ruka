@@ -23,14 +23,20 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            exe_name: Ruka.exe
             asset_name: Ruka-Windows.exe
             build_path: dist/Ruka.exe
+            archive: false
           - os: macos-latest
-            asset_name: Ruka-macOS
+            exe_name: Ruka
+            asset_name: Ruka-macOS.zip
             build_path: dist/Ruka
+            archive: true
           - os: ubuntu-latest
-            asset_name: Ruka-Linux
+            exe_name: Ruka
+            asset_name: Ruka-Linux.zip
             build_path: dist/Ruka
+            archive: true
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -62,11 +68,21 @@ jobs:
       - name: Build
         run: pyinstaller ruka.spec --noconfirm
 
+      # Raw binaries lose their executable bit on a plain browser download
+      # (unix permissions aren't part of an HTTP response body), which is
+      # what made macOS treat the file as a generic document instead of an
+      # app. Zipping preserves the bit through download + unzip, so only
+      # the Windows .exe (which doesn't need +x to launch) ships unzipped.
       - name: Stage artifact
         run: |
           mkdir -p out
-          cp "${{ matrix.build_path }}" "out/${{ matrix.asset_name }}"
-          chmod +x "out/${{ matrix.asset_name }}" || true
+          if [ "${{ matrix.archive }}" = "true" ]; then
+            cp "${{ matrix.build_path }}" "${{ matrix.exe_name }}"
+            chmod +x "${{ matrix.exe_name }}"
+            zip "out/${{ matrix.asset_name }}" "${{ matrix.exe_name }}"
+          else
+            cp "${{ matrix.build_path }}" "out/${{ matrix.asset_name }}"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
