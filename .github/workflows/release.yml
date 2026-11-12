@@ -1,8 +1,13 @@
+# Builds the desktop app for Windows, macOS and Linux and publishes it as the
+# rolling "latest" pre-release.
 name: Build and release
 
 on:
   push:
     branches: [main]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
 
 concurrency:
@@ -15,6 +20,7 @@ permissions:
 defaults:
   run:
     shell: bash
+    working-directory: desktop
 
 jobs:
   build:
@@ -45,9 +51,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # PySide6 dlopen's the system Qt/X11 libs during PyInstaller's
-      # analysis pass, so headless Ubuntu runners need these present at
-      # build time even though the app itself never runs here.
+      # PyInstaller's analysis loads Qt's system libraries, even on a headless runner.
       - name: Install Qt runtime deps (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -68,11 +72,8 @@ jobs:
       - name: Build
         run: pyinstaller ruka.spec --noconfirm
 
-      # Raw binaries lose their executable bit on a plain browser download
-      # (unix permissions aren't part of an HTTP response body), which is
-      # what made macOS treat the file as a generic document instead of an
-      # app. Zipping preserves the bit through download + unzip, so only
-      # the Windows .exe (which doesn't need +x to launch) ships unzipped.
+      # A browser download drops the executable bit; zipping keeps it. The
+      # Windows .exe does not need it, so it ships unzipped.
       - name: Stage artifact
         run: |
           mkdir -p out
@@ -87,11 +88,15 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: out/${{ matrix.asset_name }}
+          path: desktop/out/${{ matrix.asset_name }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
     steps:
       - uses: actions/checkout@v4
 
@@ -99,9 +104,7 @@ jobs:
         with:
           path: artifacts
 
-      # Delete + recreate a single rolling "latest" release/tag so it
-      # always reflects the newest commit on main, instead of piling up
-      # one release per push.
+      # One rolling "latest" release, replaced on every build.
       - name: Publish rolling "latest" release
         env:
           GH_TOKEN: ${{ github.token }}

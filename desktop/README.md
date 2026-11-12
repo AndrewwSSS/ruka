@@ -1,47 +1,74 @@
 # Ruka Control
 
-Cross-platform desktop app (Windows / macOS / Linux) for driving the Ruka
-robotic arm — a 6-servo arm controlled by an Arduino Uno, connected over USB
-serial or a paired HC-05 Bluetooth module. Built with PySide6 + pyserial.
+A cross-platform desktop app (Windows, macOS, Linux) for the Ruka arm: move
+each servo, record poses and replay them, over USB serial or a paired HC-05
+Bluetooth module. Built with PySide6 and pyserial.
 
-<img width="1145" height="730" alt="image" src="https://github.com/user-attachments/assets/f6660eb1-e9d7-407c-ad2e-2df73e21cdb2" />
+![Ruka Control](../docs/media/desktop-app.png)
 
+## Download
 
-## Requirements
+Ready-made executables for Windows, macOS and Linux are published as the
+[latest release](https://github.com/AndrewwSSS/ruka/releases/tag/latest) on
+every change to the app.
 
-- Python3
+## Run from source
 
-## Setup
+Requires Python 3 and `make`.
 
-```bash
-py -m venv .venv   # or: python3 -m venv .venv
-source .venv/Scripts/activate   # Windows (Git Bash); use .venv/bin/activate on macOS/Linux
-pip install -r requirements.txt
-```
-
-## Run
-
-```bash
+```sh
 make run
 ```
 
-`make run` creates `.venv` and installs requirements on first use, then starts
-the app. To run it by hand instead, activate the venv and use `python run.py`.
+On first use this creates `.venv` and installs [`requirements.txt`](requirements.txt).
+`make help` lists the other targets.
+
+Without `make`:
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt    # Windows: .venv\Scripts\pip
+.venv/bin/python run.py                       # Windows: .venv\Scripts\python run.py
+```
 
 ## Connecting
 
-- **USB**: plug in the Arduino, pick the port it enumerates as (usually
-  `COMx`), baud `9600`, click Connect.
-- **Bluetooth**: pair the HC-05 module first via Windows Bluetooth settings
-  (default PIN is usually `1234` or `0000`) — that creates an outgoing COM
-  port you can select the same way, baud `9600`.
+- **USB:** plug in the Arduino, choose its serial port (`COMx` on Windows,
+  `/dev/cu.usbmodem*` or `/dev/cu.usbserial*` on macOS, `/dev/ttyACM*` or
+  `/dev/ttyUSB*` on Linux), keep the baud rate at **9600**, and press
+  **Connect**.
+- **Bluetooth:** pair the HC-05 module in the system's Bluetooth settings first
+  (the PIN is usually `1234` or `0000`). This creates a serial port that you
+  choose the same way.
 
-## Packaging a standalone executable
+Over Bluetooth the arm receives commands but sends no status back, so the step
+counter and playback state are only updated over USB. Details:
+[serial protocol](../docs/protocol.md).
 
-```bash
+## Tests
+
+```sh
+make test
+```
+
+Runs the protocol tests with the standard library only; no virtualenv needed.
+
+## Packaging
+
+```sh
 make build      # or: ./build.sh
 ```
 
-Produces a single portable executable: `dist\Ruka.exe` on Windows,
-`dist/Ruka` on macOS/Linux. PyInstaller doesn't cross-compile, so build on each OS separately — `./build.sh` works unchanged on all three.
+Builds a single portable executable with PyInstaller: `dist/Ruka.exe` on
+Windows, `dist/Ruka` on macOS and Linux. PyInstaller does not cross-compile, so
+build on each system; `build.sh` works unchanged on all three.
 
+## Layout
+
+| Path | Contents |
+| --- | --- |
+| [`ruka_app/core/protocol.py`](ruka_app/core/protocol.py) | the command protocol |
+| [`ruka_app/core/serial_link.py`](ruka_app/core/serial_link.py) | the serial connection, on a background thread |
+| [`ruka_app/ui/`](ruka_app/ui) | the window and its panels |
+| [`resources/`](resources) | icons and the arm diagram |
+| [`tests/`](tests) | unit tests |
