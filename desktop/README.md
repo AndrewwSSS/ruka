@@ -22,8 +22,11 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-python run.py
+make run
 ```
+
+`make run` creates `.venv` and installs requirements on first use, then starts
+the app. To run it by hand instead, activate the venv and use `python run.py`.
 
 ## Connecting
 
@@ -36,7 +39,7 @@ python run.py
 ## Packaging a standalone executable
 
 ```bash
-./build.sh
+make build      # or: ./build.sh
 ```
 
 Produces a single portable executable: `dist\Ruka.exe` on Windows,
