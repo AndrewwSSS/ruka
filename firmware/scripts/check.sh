@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Builds every env in this project's platformio.ini. Run it after a change to
-# MotorControl too: the library is linked in through symlink://, so this is
-# what catches a library change that breaks this sketch.
+# Builds every env in platformio.ini. With a platformio.local.ini it builds
+# against the local MotorControl checkout, so run it after a library change too.
 #
 #   scripts/check.sh            from anywhere inside the project
 #   PIO=/path/to/pio scripts/check.sh

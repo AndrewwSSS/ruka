@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "ServoManager.h"
 #include "PCA9685Servo.h"
+#include "PlaybackManager.h"
 
 #define BLUETOOTH_RX_PIN 13
 #define BLUETOOTH_TX_PIN 12
@@ -18,19 +19,13 @@ ServoManager arm(SERVO_COUNT);
 
 SoftwareSerial Bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 
-uint8_t  savedPositions[MAX_STEPS][SERVO_COUNT];
-uint8_t  stepCount      = 0;
-bool playbackActive = false;
-bool playbackPaused = false;
-uint8_t  playbackStep   = 0;
-bool playbackStepCurrentStepReached = false;
-uint8_t playbackStepReachedCount = 0;
+PlaybackManager playback(MAX_STEPS, SERVO_COUNT);
 
 String dataIn = "";
 
 void handleCommand(String& cmd);
-void runPlaybackStep();
 void onServoReached(uint8_t id);
+void readCommandsFrom(Stream& port, const __FlashStringHelper* label);
 
 void setup() {
     Serial.begin(SERIAL_BAUD);
@@ -58,41 +53,24 @@ void setup() {
 void loop() {
     arm.update();
 
-    while (Bluetooth.available() > 0) {
-        dataIn = Bluetooth.readStringUntil(';');
+    readCommandsFrom(Bluetooth, F("BT -> "));
+    readCommandsFrom(Serial, F("USB -> "));
+
+    playback.update(arm);
+}
+
+
+void readCommandsFrom(Stream& port, const __FlashStringHelper* label) {
+    while (port.available() > 0) {
+        dataIn = port.readStringUntil(';');
         dataIn.trim();
         if (dataIn.length() > 0) {
-            Serial.print("BT -> ");
+            Serial.print(label);
             Serial.println(dataIn);
             handleCommand(dataIn);
-        }
-    }
-
-    while (Serial.available() > 0) {
-        dataIn = Serial.readStringUntil(';');
-        dataIn.trim();
-        if (dataIn.length() > 0) {
-            Serial.print("USB -> ");
-            Serial.println(dataIn);
-            handleCommand(dataIn);
-        }
-    }
-    
-    // Handle playback step completion and run the next step if all servos have reached their target angles.
-    if (playbackActive && !playbackPaused && playbackStepCurrentStepReached) {
-        playbackStepCurrentStepReached = false;
-        playbackStepReachedCount = 0;
-
-        playbackStep++;
-        if (playbackStep >= stepCount) {
-            Serial.println("Playback finished.");
-            playbackActive = false;
-        } else {
-            runPlaybackStep();
         }
     }
 }
-
 
 void handleCommand(String& cmd) {
     // s1120 → move servo 1 to 120°, s2090 → servo 2 to 90°, etc.
@@ -105,32 +83,17 @@ void handleCommand(String& cmd) {
     }
 
     if (cmd == "SAVE") {
-        if (stepCount < MAX_STEPS) {
-            for (uint8_t i = 0; i < SERVO_COUNT; i++) {
-                savedPositions[stepCount][i] = arm.getAngle(i);
-            }
-            stepCount++;
-            Serial.println("Saved step " + String(stepCount));
-        }
+        playback.save(arm);
         return;
     }
 
     if (cmd == "RUN") {
-        if (playbackActive && playbackPaused) {
-            playbackPaused = false; // resume from pause
-        } else if (stepCount > 0) {
-            playbackStep   = 0;
-            playbackActive = true;
-            playbackPaused = false;
-            playbackStepCurrentStepReached = false;
-            playbackStepReachedCount = 0;
-            runPlaybackStep();
-        }
+        playback.run(arm);
         return;
     }
 
     if (cmd == "PAUSE") {
-        playbackPaused = true;
+        playback.pause();
         return;
     }
 
@@ -140,41 +103,11 @@ void handleCommand(String& cmd) {
     }
 
     if (cmd == "RESET") {
-        playbackActive = false;
-        playbackPaused = false;
-        playbackStep   = 0;
-        stepCount      = 0;
-        playbackStepCurrentStepReached = false;
-        playbackStepReachedCount = 0;
-        memset(savedPositions, 0, sizeof(savedPositions));
-        Serial.println("Reset.");
+        playback.reset();
         return;
     }
-}
-
-void runPlaybackStep() {
-    if (playbackStep >= stepCount) {
-        playbackStep = 0; // loop back to start
-    }
-
-    playbackStepCurrentStepReached = false;
-    playbackStepReachedCount = 0;
-
-    for (uint8_t i = 0; i < SERVO_COUNT; i++) {
-        arm.setAngle(i, savedPositions[playbackStep][i]);
-    }
-    
-    Serial.println("Playing step " + String(playbackStep + 1) + "/" + String(stepCount));
 }
 
 void onServoReached(uint8_t id) {
-    if (!playbackActive || playbackStepCurrentStepReached) {
-        return;
-    }
-
-    playbackStepReachedCount++;
-    if (playbackStepReachedCount >= SERVO_COUNT) {
-        playbackStepCurrentStepReached = true;
-        Serial.println("Current playback step reached.");
-    }
+    playback.onServoReached(id);
 }
