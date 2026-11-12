@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h>
 #include <Arduino.h>
+#include <CommandDispatcher.h>
 #include "ServoManager.h"
 #include "PCA9685Servo.h"
 #include "PlaybackManager.h"
@@ -12,7 +13,8 @@
 #define MAX_STEPS 50
 #define SERIAL_BAUD 9600
 #define BLUETOOTH_BAUD 9600
-#define BLUETOOTH_TIMEOUT_MS 20
+#define MIN_ANGLE 0
+#define MAX_ANGLE 180
 
 Adafruit_PWMServoDriver pwm; // I2C: SDA -> A4, SCL -> A5 (Uno hardware I2C default)
 ServoManager arm(SERVO_COUNT);
@@ -21,17 +23,37 @@ SoftwareSerial Bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 
 PlaybackManager playback(MAX_STEPS, SERVO_COUNT);
 
-String dataIn = "";
+// Errors and usage lines go to USB; Bluetooth is send-only.
+CommandDispatcher<8> commands(Serial);
+LineReader<16>       usb(Serial, ';');
+LineReader<16>       bluetooth(Bluetooth, ';');
 
-void handleCommand(String& cmd);
-void onServoReached(uint8_t id);
-void readCommandsFrom(Stream& port, const __FlashStringHelper* label);
+// s <servo> <angle>: servo 1-6, angle clamped to 0-180.
+static void cmdServo(const CommandArgs& args) {
+    long servo = args.getLong(0);
+    if (servo < 1 || servo > SERVO_COUNT) {
+        Serial.println(F("servo must be 1-6"));
+        return;
+    }
+    // Clamp before narrowing: int is 16 bits on the Uno.
+    long angle = constrain(args.getLong(1), MIN_ANGLE, MAX_ANGLE);
+    arm.setAngle((uint8_t)(servo - 1), (int)angle);
+}
+
+static void cmdSave(const CommandArgs&)    { playback.save(arm); }
+static void cmdRun(const CommandArgs&)     { playback.run(arm); }
+static void cmdPause(const CommandArgs&)   { playback.pause(); }
+static void cmdDefault(const CommandArgs&) { arm.setDefaultAngles(); }
+static void cmdReset(const CommandArgs&)   { playback.reset(); }
+
+static void onServoReached(uint8_t id) {
+    playback.onServoReached(id);
+}
 
 void setup() {
     Serial.begin(SERIAL_BAUD);
     Bluetooth.begin(BLUETOOTH_BAUD);
-    Bluetooth.setTimeout(BLUETOOTH_TIMEOUT_MS);
-    Serial.println("Bluetooth ready!");
+    Serial.println(F("Bluetooth ready!"));
     delay(20);
 
     pwm.begin();
@@ -48,66 +70,20 @@ void setup() {
 
     arm.begin();
     arm.onReached(onServoReached);
+
+    commands.add(F("s"), F("nn"), cmdServo);
+    commands.add(F("SAVE"), cmdSave);
+    commands.add(F("RUN"), cmdRun);
+    commands.add(F("PAUSE"), cmdPause);
+    commands.add(F("DEFAULT"), cmdDefault);
+    commands.add(F("RESET"), cmdReset);
 }
 
 void loop() {
     arm.update();
 
-    readCommandsFrom(Bluetooth, F("BT -> "));
-    readCommandsFrom(Serial, F("USB -> "));
+    bluetooth.poll(commands);
+    usb.poll(commands);
 
     playback.update(arm);
-}
-
-
-void readCommandsFrom(Stream& port, const __FlashStringHelper* label) {
-    while (port.available() > 0) {
-        dataIn = port.readStringUntil(';');
-        dataIn.trim();
-        if (dataIn.length() > 0) {
-            Serial.print(label);
-            Serial.println(dataIn);
-            handleCommand(dataIn);
-        }
-    }
-}
-
-void handleCommand(String& cmd) {
-    // s1120 → move servo 1 to 120°, s2090 → servo 2 to 90°, etc.
-    if (cmd.startsWith("s") && cmd.length() >= 3) {
-        int id = cmd.charAt(1) - '1'; // '1'–'6' → index 0–5
-        if (id >= 0 && id < (int)SERVO_COUNT) {
-            arm.setAngle(id, cmd.substring(2).toInt());
-            return;
-        }
-    }
-
-    if (cmd == "SAVE") {
-        playback.save(arm);
-        return;
-    }
-
-    if (cmd == "RUN") {
-        playback.run(arm);
-        return;
-    }
-
-    if (cmd == "PAUSE") {
-        playback.pause();
-        return;
-    }
-
-    if (cmd == "DEFAULT") {
-        arm.setDefaultAngles();
-        return;
-    }
-
-    if (cmd == "RESET") {
-        playback.reset();
-        return;
-    }
-}
-
-void onServoReached(uint8_t id) {
-    playback.onServoReached(id);
 }

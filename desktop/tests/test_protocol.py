@@ -8,13 +8,13 @@ FIRMWARE_MAIN = Path(__file__).resolve().parents[2] / "firmware" / "src" / "main
 
 
 class MoveServoTest(unittest.TestCase):
-    def test_formats_one_based_servo_and_three_digit_angle(self):
-        self.assertEqual(protocol.move_servo(0, 120), "s1120;")
-        self.assertEqual(protocol.move_servo(5, 7), "s6007;")
+    def test_sends_one_based_servo_and_angle_as_words(self):
+        self.assertEqual(protocol.move_servo(0, 120), "s 1 120;")
+        self.assertEqual(protocol.move_servo(5, 7), "s 6 7;")
 
     def test_clamps_the_angle(self):
-        self.assertEqual(protocol.move_servo(0, -10), "s1000;")
-        self.assertEqual(protocol.move_servo(0, 300), "s1180;")
+        self.assertEqual(protocol.move_servo(0, -10), "s 1 0;")
+        self.assertEqual(protocol.move_servo(0, 300), "s 1 180;")
 
     def test_rejects_an_unknown_servo(self):
         with self.assertRaises(ValueError):
@@ -49,6 +49,14 @@ class FirmwareAgreementTest(unittest.TestCase):
         self.assertIsNotNone(match, "SERVO_DEFAULTS not found in firmware")
         firmware = [int(v) for v in match.group(1).split(",")]
         self.assertEqual(protocol.SERVO_DEFAULTS, firmware)
+
+    def test_angle_range_matches(self):
+        self.assertEqual(protocol.MIN_ANGLE, self.define("MIN_ANGLE"))
+        self.assertEqual(protocol.MAX_ANGLE, self.define("MAX_ANGLE"))
+
+    def test_firmware_registers_every_command(self):
+        for name in ("s", "SAVE", "RUN", "PAUSE", "DEFAULT", "RESET"):
+            self.assertRegex(self.source, rf'commands\.add\(F\("{name}"\)', name)
 
     def test_counts_and_baud_rate_match(self):
         self.assertEqual(protocol.SERVO_COUNT, self.define("SERVO_COUNT"))

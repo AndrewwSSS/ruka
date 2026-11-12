@@ -16,12 +16,12 @@ assert len(SERVO_DEFAULTS) == SERVO_COUNT
 
 
 def move_servo(servo_index: int, angle: int) -> str:
-    """servo_index is 0-based (0-5); firmware addresses servos as '1'-'6'."""
+    """servo_index is 0-based (0-5); firmware addresses servos as 1-6."""
     if not 0 <= servo_index < SERVO_COUNT:
         raise ValueError(f"servo_index must be 0-{SERVO_COUNT - 1}, got {servo_index}")
     angle = max(MIN_ANGLE, min(MAX_ANGLE, int(angle)))
     
-    return f"s{servo_index + 1}{angle:03d}{TERMINATOR}"
+    return f"s {servo_index + 1} {angle}{TERMINATOR}"
 
 
 def save_step() -> str:

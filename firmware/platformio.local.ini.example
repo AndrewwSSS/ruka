@@ -1,7 +1,9 @@
-; Copy to platformio.local.ini to build against a MotorControl checkout next to
-; this repo, so library changes are tested before they are released.
+; Copy to platformio.local.ini to build against the MotorControl and
+; CommandDispatcher checkouts next to this repo, so library changes are tested
+; before they are released.
 [deps]
 lib_deps =
     symlink://../../MotorControl
+    symlink://../../CommandDispatcher
     arduino-libraries/Servo@^1.3.0
     adafruit/Adafruit PWM Servo Driver Library@^3.0.3

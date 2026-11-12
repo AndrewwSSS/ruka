@@ -23,7 +23,8 @@ public:
             positions[stepIndex(stepCount, i)] = arm.getAngle(i);
         }
         stepCount++;
-        Serial.println("Saved step " + String(stepCount));
+        Serial.print(F("Saved step "));
+        Serial.println(stepCount);
     }
 
     void run(ServoManager& arm) {
@@ -51,7 +52,7 @@ public:
         stepReached = false;
         reachedCount = 0;
         memset(positions, 0, (uint16_t)maxSteps * servoCount);
-        Serial.println("Reset.");
+        Serial.println(F("Reset."));
     }
 
     // Wire to ServoManager::onReached so each servo arrival counts toward the current step.
@@ -61,7 +62,7 @@ public:
         reachedCount++;
         if (reachedCount >= servoCount) {
             stepReached = true;
-            Serial.println("Current playback step reached.");
+            Serial.println(F("Current playback step reached."));
         }
     }
 
@@ -71,7 +72,7 @@ public:
 
         step++;
         if (step >= stepCount) {
-            Serial.println("Playback finished.");
+            Serial.println(F("Playback finished."));
             active = false;
         } else {
             playStep(arm);
@@ -93,7 +94,10 @@ private:
             arm.setAngle(i, positions[stepIndex(step, i)]);
         }
 
-        Serial.println("Playing step " + String(step + 1) + "/" + String(stepCount));
+        Serial.print(F("Playing step "));
+        Serial.print(step + 1);
+        Serial.print('/');
+        Serial.println(stepCount);
     }
 
     uint8_t* positions;
