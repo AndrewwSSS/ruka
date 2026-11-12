@@ -1,0 +1,7 @@
+; Copy to platformio.local.ini to build against a MotorControl checkout next to
+; this repo, so library changes are tested before they are released.
+[deps]
+lib_deps =
+    symlink://../../MotorControl
+    arduino-libraries/Servo@^1.3.0
+    adafruit/Adafruit PWM Servo Driver Library@^3.0.3
