@@ -34,15 +34,18 @@ controls it over USB or Bluetooth and records and replays movement sequences.
 | [`firmware/`](firmware) | Arduino Uno sketch (PlatformIO), Fritzing wiring diagram |
 | [`desktop/`](desktop) | the desktop app (Python, PySide6), tests, packaging |
 | [`docs/`](docs) | serial protocol and wiring |
+| [`Makefile`](Makefile) | common tasks for both halves |
 
 ## Getting started
+
+Run `make` in the repository root to list the common tasks.
 
 **Firmware** (requires [PlatformIO](https://platformio.org/); libraries are
 fetched automatically):
 
 ```sh
-cd firmware
-pio run -e uno -t upload
+make upload      # build and upload to the connected Uno
+make monitor     # serial monitor
 ```
 
 **Desktop app:** download an executable from the
@@ -50,8 +53,7 @@ pio run -e uno -t upload
 run it from source with Python 3:
 
 ```sh
-cd desktop
-make run
+make app
 ```
 
 Then pick the board's serial port at 9600 baud and press **Connect**. More in
@@ -68,8 +70,8 @@ Then pick the board's serial port at 9600 baud and press **Connect**. More in
 ## Tests
 
 ```sh
-cd desktop && make test               # protocol tests, standard library only
-cd firmware && scripts/check.sh       # firmware build
+make test     # protocol tests, standard library only
+make check    # the tests plus the firmware build
 ```
 
 CI runs both on every push and pull request.
