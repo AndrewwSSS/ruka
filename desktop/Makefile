@@ -13,12 +13,13 @@ BOOTSTRAP_PY := $(shell command -v python3 2>/dev/null || command -v py 2>/dev/n
 VENV_PY = $(if $(wildcard $(VENV)/Scripts/python.exe),$(VENV)/Scripts/python.exe,$(VENV)/bin/python)
 
 .DEFAULT_GOAL := help
-.PHONY: help run build deps clean distclean
+.PHONY: help run build test deps clean distclean
 
 help:
 	@echo "Targets:"
 	@echo "  make run        launch the app (python run.py inside .venv)"
 	@echo "  make build      package a standalone executable into dist/"
+	@echo "  make test       run the unit tests (standard library only)"
 	@echo "  make deps       create .venv and install requirements only"
 	@echo "  make clean      remove build/ and dist/ and __pycache__ dirs"
 	@echo "  make distclean  clean, and remove .venv too"
@@ -29,6 +30,9 @@ run: $(DEPS_STAMP)
 build: $(BUILD_STAMP)
 	$(VENV_PY) -m PyInstaller ruka.spec --noconfirm
 	@echo "Build complete: dist/Ruka.exe (Windows) or dist/Ruka (macOS/Linux)"
+
+test:
+	$(BOOTSTRAP_PY) -m unittest discover -s tests -v
 
 deps: $(DEPS_STAMP)
 

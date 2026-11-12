@@ -1,17 +1,13 @@
-"""Serial command protocol for the Ruka robotic arm firmware.
+"""Serial command protocol of the Ruka firmware (firmware/src/main.cpp).
 
-Mirrors src/main.cpp in the Ruka-main PlatformIO project: every command is a
-plain-text line terminated with ';'. There is no query/response API in the
-firmware -- status lines it prints (e.g. "Saved step 3") are written to the
-hardware USB Serial only. The HC-05 Bluetooth link (SoftwareSerial) can send
-commands to the arm but never receives those status lines back, so a
-Bluetooth-connected session is send-only from the app's point of view.
+Commands are plain text terminated with ';'. Status lines come back over USB
+only; a Bluetooth session is send-only. See docs/protocol.md.
 """
 
 SERVO_COUNT = 6
 MIN_ANGLE = 0
 MAX_ANGLE = 180
-SERVO_DEFAULTS = [90, 170, 100, 90, 55, 90]  # matches SERVO_DEFAULTS in main.cpp, indexed by servo 1-6
+SERVO_DEFAULTS = [90, 100, 100, 90, 70, 90]  # must match SERVO_DEFAULTS in firmware/src/main.cpp
 MAX_STEPS = 50
 DEFAULT_BAUD_RATE = 9600
 TERMINATOR = ";"
